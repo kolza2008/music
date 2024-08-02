@@ -111,7 +111,8 @@ def getTrack():
     res = {
         "id": song.id,
         "name": song.name,
-        "author": song.author
+        "author": song.author,
+        "thumbnail": song.thumbnail
     }
 
     return jsonify(res)
