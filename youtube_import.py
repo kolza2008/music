@@ -21,7 +21,7 @@ def import_track(author, track, filename=None):
 
     if filename is None and os.path.exists(os.path.join(config.PATH + "/download", id+".mp3")):
         return id
-    elif filename is not None and os.path.exists(config.PATH + "/download", filename=filename+".mp3"):
+    elif filename is not None and os.path.exists(config.PATH + "/download", filename+".mp3"):
         return filename
 
     stream = 0
