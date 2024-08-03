@@ -31,7 +31,7 @@ def downloadTrackV2():
         song = s.scalar(select(Song).where(Song.id == id_))
     
     try:
-        fileId = import_track(song.author, song.name)
+        fileId = import_track(song.author, song.name, filename=song.id)
         return send_from_directory(config.PATH + "/download", fileId+".mp3")
     except Exception as ex:
         return Response(status=500, response=f"youtube raised error: {str(ex)}")
