@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from youtube_import import *
+from config import proxies
+from librarium import *
 from models import *
 import requests
-import hashlib
 import pprint
 import uuid
 
@@ -52,33 +53,9 @@ def searchTracks():
     with Session(engine) as s:
         for i in res["results"]:
             if i["wrapperType"] == "track":
-                try:
-                    song = Song(
-                        id = uuid.uuid4().hex,
-                        md5hash = hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest(),
-                        name = i["trackCensoredName"],
-                        author = i["artistName"],
-                        thumbnail = i["artworkUrl100"]
-                    )
-                    s.add(song)
-                    s.commit()
-                except:
-                    s.rollback()
-                    req = select(Song).where(Song.md5hash == hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest())
-                    song = s.scalar(req)
-                entity = {
-                    "id": song.id,
-                    "type": "track",
-                    "artistID": None,
-                    "artistName": i["artistName"],
-                    "albumID": None,
-                    "albumName": i["collectionName"],
-                    "trackName": i["trackCensoredName"],
-                    "thumbnail": i["artworkUrl100"],
-                    "duration": i["trackTimeMillis"]
-                }
-                songs.append(entity)
+                songs.append(handleTrack(i, s))
             elif i["wrapperType"] == "collection":
+                #album = getAlbumByName(i["collectionName"], i["artistName"], s)
                 entity = {
                     "id": None,
                     "type": "album",
@@ -107,12 +84,39 @@ def getTrack():
     
     with Session(engine) as s:
         song = s.scalar(select(Song).where(Song.id == id_))
+
+    print(song.thumbnail1000)
+    if song.thumbnail1000 == "":
+        if song.albumID != None:
+            song.thumbnail1000 = song.album.thumbnail
+        #req = requests.get("https://ya.ru", proxies=proxies) 
     
     res = {
         "id": song.id,
         "name": song.name,
         "author": song.author,
-        "thumbnail": song.thumbnail
+        "thumbnail": song.thumbnail1000
+    }
+
+    return jsonify(res)
+
+def getAlbum():
+    id_ = request.args.get('id')
+    if id_ is None:
+        return Response(status=400)
+    
+    with Session(engine) as s:
+        album = s.scalar(select(Album).where(Album.id == id_))
+
+    res = {
+        "id": album.id,
+        "name": album.name,
+        "author": album.artist.name,
+        "thumbnail": album.thumbnail,
+        "date": album.released_at,
+        "songs": [
+            {"id": s.id, "name" : s.name} for s in album.songs
+        ]
     }
 
     return jsonify(res)
@@ -122,3 +126,4 @@ def register_routes(app):
     app.add_url_rule('/api/trackFile', 'downloadTrack', downloadTrackV2, methods=['GET'])
     app.add_url_rule('/api/search', 'searchEntities', searchTracks, methods=['GET'])
     app.add_url_rule('/api/track', 'getTrack', getTrack, methods=['GET'])
+    app.add_url_rule('/api/album', 'getAlbum', getAlbum, methods=['GET'])
