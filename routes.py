@@ -56,15 +56,7 @@ def searchTracks():
                 songs.append(handleTrack(i, s))
             elif i["wrapperType"] == "collection":
                 #album = getAlbumByName(i["collectionName"], i["artistName"], s)
-                entity = {
-                    "id": None,
-                    "type": "album",
-                    "artistID": None,
-                    "artistName": i["artistName"],
-                    "name": i["collectionName"],
-                    "thumbnail": i["artworkUrl100"]
-                }
-                albums.append(entity)
+                albums.append(handleAlbum(i, s))
             elif i["wrapperType"] == "artist":
                 entity = {
                     "id": None,

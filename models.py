@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import PrimaryKeyConstraint
 
 
-engine = create_engine("sqlite:///db.db", echo=True)
+engine = create_engine("sqlite:///db.db") #, echo=True
 
 class Model(DeclarativeBase):
     pass
@@ -24,11 +24,12 @@ class Artist(Model):
 class Album(Model):
     __tablename__ = "albums"
     id: Mapped[str] = mapped_column(primary_key=True)
-    mbid: Mapped[str]
-    name: Mapped[str]
-    released_at: Mapped[str]
-    thumbnail: Mapped[str]
-    artistID: Mapped[str] = mapped_column(ForeignKey("artists.id"))
+    md5: Mapped[str] = mapped_column(unique=True)
+    mbid: Mapped[str] = mapped_column(nullable=True)
+    name: Mapped[str] = mapped_column(nullable=True)
+    released_at: Mapped[str] = mapped_column(nullable=True)
+    thumbnail: Mapped[str] = mapped_column(nullable=True)
+    artistID: Mapped[str] = mapped_column(ForeignKey("artists.id"), nullable=True)
 
     songs: Mapped[List["Song"]] = relationship(back_populates="album")
     artist: Mapped[Artist] = relationship(back_populates="albums")
@@ -36,7 +37,7 @@ class Album(Model):
 class Song(Model):
     __tablename__ = 'songs'
     id: Mapped[str] = mapped_column(primary_key=True)
-    md5hash: Mapped[str] = mapped_column(unique=True)
+    md5: Mapped[str] = mapped_column(unique=True)
     name: Mapped[str]
     author: Mapped[str]
     thumbnail: Mapped[str]

@@ -88,7 +88,7 @@ def importAlbumByName(name, artist, s):
             if j.tag == "{http://musicbrainz.org/ns/mmd-2.0#}recording":
                 song = Song(
                     id = uuid.uuid4().hex,
-                    md5hash = hashlib.md5(f'{j[0].text}+{artist}+{name}'.encode()).hexdigest(),
+                    md5 = hashlib.md5(f'{j[0].text}+{artist}+{name}'.encode()).hexdigest(),
                     name = j[0].text,
                     author = artist,
                     thumbnail = album.thumbnail,
@@ -101,10 +101,11 @@ def importAlbumByName(name, artist, s):
     return album
     
 def handleTrack(i, s):
+    trackHash = hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest()
     try:
         song = Song(
             id = uuid.uuid4().hex,
-            md5hash = hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest(),
+            md5 = trackHash,
             name = i["trackCensoredName"],
             author = i["artistName"],
             thumbnail = i["artworkUrl100"],
@@ -115,7 +116,7 @@ def handleTrack(i, s):
         s.commit()
     except Exception as e:
         s.rollback()
-        req = select(Song).where(Song.md5hash == hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest())
+        req = select(Song).where(Song.md5 == trackHash)
         song = s.scalar(req)
 
     entity = {
@@ -128,5 +129,31 @@ def handleTrack(i, s):
         "trackName": i["trackCensoredName"],
         "thumbnail": i["artworkUrl100"],
         "duration": i["trackTimeMillis"]
+    }
+    return entity
+
+def handleAlbum(i, s):
+    albumHash = hashlib.md5(f'{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest()
+    try:
+        album = Album(
+            id = uuid.uuid4().hex,
+            md5 = albumHash,
+            name = i["collectionName"]
+        )
+        s.add(album)
+        s.commit()
+    except Exception as e:
+        print(e)
+        s.rollback()
+        req = select(Album).where(Album.md5 == albumHash)
+        album = s.scalar(req)
+
+    entity = {
+        "id": album.id,
+        "type": "album",
+        "artistID": None,
+        "artistName": i["artistName"],
+        "name": i["collectionName"],
+        "thumbnail": i["artworkUrl100"]
     }
     return entity
