@@ -101,7 +101,7 @@ def importAlbumByName(name, artist, s):
     return album
     
 def handleTrack(i, s):
-    trackHash = hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest()
+    trackHash = hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i.get("collectionName", "single")}'.encode()).hexdigest()
     try:
         song = Song(
             id = uuid.uuid4().hex,
@@ -125,7 +125,7 @@ def handleTrack(i, s):
         "artistID": None,
         "artistName": i["artistName"],
         "albumID": None,
-        "albumName": i["collectionName"],
+        "albumName": i.get("collectionName", ""),
         "trackName": i["trackCensoredName"],
         "thumbnail": i["artworkUrl100"],
         "duration": i["trackTimeMillis"]
