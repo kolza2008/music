@@ -77,10 +77,10 @@ def getTrack():
     with Session(engine) as s:
         song = s.scalar(select(Song).where(Song.id == id_))
 
-    print(song.thumbnail1000)
-    if song.thumbnail1000 == "":
-        if song.albumID != None:
-            song.thumbnail1000 = song.album.thumbnail
+        print(song.thumbnail1000)
+        if song.thumbnail1000 == "":
+            if song.albumID != None:
+                song.thumbnail1000 = song.album.thumbnail
         #req = requests.get("https://ya.ru", proxies=proxies) 
     
     res = {
