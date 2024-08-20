@@ -79,7 +79,7 @@ def getTrack():
 
         print(song.thumbnail1000)
         if song.thumbnail1000 == "":
-            if song.albumID != None:
+            if song.album != None:
                 song.thumbnail1000 = song.album.thumbnail
         #req = requests.get("https://ya.ru", proxies=proxies) 
     
@@ -87,7 +87,7 @@ def getTrack():
         "id": song.id,
         "name": song.name,
         "author": song.author,
-        "thumbnail": song.thumbnail1000
+        "thumbnail": song.thumbnail1000 or song.thumbnail
     }
 
     return jsonify(res)
