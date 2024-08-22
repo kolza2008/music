@@ -16,10 +16,12 @@ class Model(DeclarativeBase):
 class Artist(Model):
     __tablename__ = "artists"
     id: Mapped[str] = mapped_column(primary_key=True)
-    mbid: Mapped[str]
+    mbid: Mapped[str] = mapped_column(nullable=True)
     name: Mapped[str]
+    searchID: Mapped[int] = mapped_column(unique=True)
 
     albums: Mapped[List["Album"]] = relationship(back_populates="artist")
+    songs: Mapped[List["Song"]] = relationship(back_populates="artist")
 
 class Album(Model):
     __tablename__ = "albums"
@@ -42,6 +44,10 @@ class Song(Model):
     author: Mapped[str]
     thumbnail: Mapped[str]
     thumbnail1000: Mapped[str]
+
+    artistID: Mapped[str] = mapped_column(ForeignKey("artists.id"))
+    artist: Mapped["Artist"] = relationship(back_populates="songs")
+
     albumID: Mapped[str] = mapped_column(ForeignKey("albums.id"))
     album: Mapped["Album"] = relationship(back_populates="songs")
 

@@ -99,10 +99,30 @@ def importAlbumByName(name, artist, s):
                 break
     s.commit()  
     return album
+
+def getArtistFromApple(i, s):
+    req = select(Artist).where(Artist.searchID == i["artistId"])
+        
+    res = s.scalar(req)
+    if res is not None:
+        return res
+    
+    artist = Artist(
+        id = uuid.uuid4().hex,
+        searchID = i["artistId"],
+        name = i["artistName"]
+    )
+    s.add(artist)
+    s.commit()
+
+    return artist
+
     
 def handleTrack(i, s):
     trackHash = hashlib.md5(f'{i["trackCensoredName"]}+{i["artistName"]}+{i.get("collectionName", "single")}'.encode()).hexdigest()
     try:
+        artist = getArtistFromApple(i, s)
+
         song = Song(
             id = uuid.uuid4().hex,
             md5 = trackHash,
@@ -110,19 +130,22 @@ def handleTrack(i, s):
             author = i["artistName"],
             thumbnail = i["artworkUrl100"],
             thumbnail1000 = "",
-            albumID = "NULL"
+            albumID = "NULL",
+            artistID = artist.id
         )
         s.add(song)
         s.commit()
     except Exception as e:
+        print(e)
         s.rollback()
         req = select(Song).where(Song.md5 == trackHash)
         song = s.scalar(req)
+        s.add(song)
 
     entity = {
         "id": song.id,
         "type": "track",
-        "artistID": None,
+        "artistID": song.artist.id,
         "artistName": i["artistName"],
         "albumID": None,
         "albumName": i.get("collectionName", ""),
@@ -134,16 +157,19 @@ def handleTrack(i, s):
 
 def handleAlbum(i, s):
     albumHash = hashlib.md5(f'{i["artistName"]}+{i["collectionName"]}'.encode()).hexdigest()
+    artist = getArtistFromApple(i, s)
+
     try:
         album = Album(
             id = uuid.uuid4().hex,
             md5 = albumHash,
-            name = i["collectionName"]
+            name = i["collectionName"],
+            artistID = artist.id
         )
         s.add(album)
         s.commit()
     except Exception as e:
-        print(e)
+        #print(e)
         s.rollback()
         req = select(Album).where(Album.md5 == albumHash)
         album = s.scalar(req)
@@ -151,9 +177,19 @@ def handleAlbum(i, s):
     entity = {
         "id": album.id,
         "type": "album",
-        "artistID": None,
+        "artistID": artist.id,
         "artistName": i["artistName"],
         "name": i["collectionName"],
         "thumbnail": i["artworkUrl100"]
+    }
+    return entity
+
+def handleArtist(i, s):
+    artist = getArtistFromApple(i, s)
+
+    entity = {
+        "id": artist.id,
+        "type": "artist",
+        "name": i["artistName"]
     }
     return entity
